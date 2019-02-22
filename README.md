@@ -9,7 +9,7 @@ You need:
 
 In ubuntu like system:
 ```
-sudo apt install python3 python3-pip python3-virtualenv
+sudo apt install python3 python3-pip python3-virtualenv git
 ```
 
 In windows well have fun :p ([anaconda](https://www.anaconda.com/distribution/) should be a good option)
