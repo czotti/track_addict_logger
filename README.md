@@ -9,7 +9,8 @@ You need:
 
 In ubuntu like system:
 ```
-sudo apt install python3 python3-pip python3-virtualenv
+sudo apt update
+sudo apt install -y python3 python3-pip python3-virtualenv
 ```
 
 In windows well have fun :p ([anaconda](https://www.anaconda.com/distribution/) should be a good option)
@@ -23,7 +24,7 @@ cd track_addict_logger
 
 Prepare the environment:
 ```
-virtualenv -p python3 .venv
+python3 -m virtualenv -p python3 .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 deactivate
