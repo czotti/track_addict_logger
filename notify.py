@@ -1,9 +1,16 @@
+#!/usr/bin/env python3
+"""
+Notification script to send data through NBP TrackAddict protocol.
+"""
+
 import argparse
+import asyncio
+import time
 from collections import OrderedDict
 import logging
-import pyinotify
 import queue
-import time
+
+import aiofiles
 from pynbp import NbpPayload, NbpKPI, WifiPyNBP
 
 LOGGER = logging.Logger(__name__)
@@ -14,17 +21,19 @@ def callback(notifier):
     return False
 
 
-class EventHandler(pyinotify.ProcessEvent):
+class EventHandler():
     def __init__(self, queue: queue.Queue, path: str):
-        self.file = open(path, 'r')
+        self.path = path
         self.nbp_queue = queue
-        self.read_file_lines()
         self.header = None
 
-    def read_file_lines(self):
+    async def read_file_header(self, f):
         header, units = None, None
-        lines = iter(self.file.readlines())
-        for line in lines:
+        while True:
+            line = await f.readline()
+            if len(line) == 0:
+                print("Skip")
+                continue
             if line.startswith("Time"):
                 header = line
             if line.strip().startswith("sec"):
@@ -32,27 +41,28 @@ class EventHandler(pyinotify.ProcessEvent):
             if header is not None and units is not None:
                 break
 
-        self.process_header(header, units)
-        self.process_lines(lines)
+        await self.process_header(header, units)
 
-    def process_header(self, header, units):
+    async def process_header(self, header, units):
         self.header = OrderedDict([
             (h.strip(), u.strip())
             for h, u in zip(header.split("\t")[1:], units.split("\t")[1:])
         ])
 
-    def process_lines(self, lines):
-        for line in lines:
-            values = line.split("\t")
-            packets = [
-                NbpKPI(name=header[0], unit=header[1], value=value.strip())
-                for (header, value) in zip(self.header.items(), values[1:])
-            ]
-            self.nbp_queue.put(NbpPayload(
-                timestamp=time.time(), packettype="UPDATE", nbpkpilist=packets))
-
-    def process_IN_CLOSE_WRITE(self, event):
-        self.process_lines(self.file.readlines())
+    async def process_lines(self):
+        async with aiofiles.open(self.path) as f:
+            await self.read_file_header(f)
+            while True:
+                line = await f.readline()
+                if len(line) == 0:
+                    continue
+                values = line.split("\t")
+                packets = [
+                    NbpKPI(name=header[0], unit=header[1], value=value.strip())
+                    for (header, value) in zip(self.header.items(), values[1:])
+                ]
+                self.nbp_queue.put(NbpPayload(
+                    timestamp=time.time(), packettype="UPDATE", nbpkpilist=packets))
 
 
 def argument_parser():
@@ -79,10 +89,10 @@ def main():
         NbpPayload(timestamp=time.time(), packettype='ALL', nbpkpilist=[])
     )
     time.sleep(5)
-    wm = pyinotify.WatchManager()
-    notifier = pyinotify.Notifier(wm, EventHandler(nbp_queue, args.logfile))
-    wm.add_watch(args.logfile, pyinotify.IN_CLOSE_WRITE)
-    notifier.loop()
+    loop = asyncio.get_event_loop()
+    event_handler = EventHandler(nbp_queue, args.logfile)
+    loop.run_until_complete(event_handler.process_lines())
+
 
 if __name__ == "__main__":
     main()
