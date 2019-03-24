@@ -46,7 +46,7 @@ class EventHandler(pyinotify.ProcessEvent):
             values = line.split("\t")
             packets = [
                 NbpKPI(name=header[0], unit=header[1], value=value.strip())
-                for (header, value) in zip(self.header.items(), values)
+                for (header, value) in zip(self.header.items(), values[1:])
             ]
             self.nbp_queue.put(NbpPayload(
                 timestamp=time.time(), packettype="UPDATE", nbpkpilist=packets))
