@@ -16,11 +16,6 @@ from pynbp import NbpPayload, NbpKPI, WifiPyNBP
 LOGGER = logging.Logger(__name__)
 
 
-def callback(notifier):
-    print(notifier)
-    return False
-
-
 class EventHandler():
     def __init__(self, queue: queue.Queue, path: str):
         self.path = path
@@ -88,8 +83,7 @@ def main():
     nbp_queue.put(
         NbpPayload(timestamp=time.time(), packettype='ALL', nbpkpilist=[])
     )
-    time.sleep(5)
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     event_handler = EventHandler(nbp_queue, args.logfile)
     loop.run_until_complete(event_handler.process_lines())
 
