@@ -27,7 +27,7 @@ class EventHandler():
         while True:
             line = await f.readline()
             if len(line) == 0:
-                print("Skip")
+                LOGGER.warning("Skip")
                 continue
             if line.startswith("Time"):
                 header = line
@@ -47,6 +47,8 @@ class EventHandler():
     async def process_lines(self):
         async with aiofiles.open(self.path) as f:
             await self.read_file_header(f)
+            f.seek(-1, 2)
+            LOGGER.warning("File header read.")
             while True:
                 line = await f.readline()
                 if len(line) == 0:
@@ -65,9 +67,9 @@ def argument_parser():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("logfile", help="Software logfile.")
     parser.add_argument("-ip", type=str, default="0.0.0.0",
-                        help="Adress ip to bind the nbp server.")
+                        help="Address ip to bind the nbp server.")
     parser.add_argument("-p", "--port", type=int, default=35000,
-                        help="Port for the server to listen.")
+                        help="Server port.")
     parser.add_argument("-u", "--update", type=float, default=0.2,
                         help="Update interval for the server.")
     return parser.parse_args()
