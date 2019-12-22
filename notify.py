@@ -61,7 +61,8 @@ class EventHandler():
 
 
 def argument_parser():
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("logfile", help="Software logfile.")
     parser.add_argument("-ip", type=str, default="0.0.0.0",
                         help="Adress ip to bind the nbp server.")
@@ -74,9 +75,11 @@ def argument_parser():
 
 def main():
     args = argument_parser()
-    LOGGER.warning("Start Wifi NBP server on: {}:{}".format(args.ip, args.port))
+    LOGGER.warning(
+        "Start Wifi NBP server on: {}:{}".format(args.ip, args.port))
     nbp_queue = queue.Queue()
-    nbp_srv = WifiPyNBP(nbp_queue, ip=args.ip, port=args.port, min_update_interval=args.update)
+    nbp_srv = WifiPyNBP(nbp_queue, ip=args.ip, port=args.port,
+                        min_update_interval=args.update)
     nbp_srv.daemon = True
     nbp_srv.start()
     LOGGER.warning("NBP server started.")
